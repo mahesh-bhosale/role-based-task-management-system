@@ -1,3 +1,16 @@
+﻿import pathlib
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent / "src"
+
+def write(rel, content):
+    path = ROOT / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+    print("Wrote", rel)
+
+
+
+write('validators/project.validator.ts', '''
 import { z } from 'zod';
 import { ProjectStatus } from '@prisma/client';
 
@@ -48,3 +61,4 @@ export const listProjectTasksQuerySchema = z.object({
   priority: z.string().optional(),
   search: z.string().optional(),
 });
+''')

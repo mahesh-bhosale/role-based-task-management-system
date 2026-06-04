@@ -10,14 +10,16 @@ export class ProjectController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const pagination = getPagination(req.query as Record<string, unknown>);
-      const result = await projectService.list(
-        pagination,
+      const result = await projectService.getProjects(
         {
           status: req.query.status as ProjectStatus | undefined,
+          managerId: req.query.managerId as string | undefined,
+          startDate: req.query.startDate ? new Date(String(req.query.startDate)) : undefined,
+          endDate: req.query.endDate ? new Date(String(req.query.endDate)) : undefined,
           search: req.query.search as string | undefined,
         },
-        req.user!.id,
-        req.user!.role
+        pagination,
+        { id: req.user!.id, role: req.user!.role }
       );
       return success(res, result);
     } catch (err) {
@@ -27,11 +29,10 @@ export class ProjectController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const project = await projectService.getById(
-        asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
+      const project = await projectService.getProjectById(asString(req.params.id), {
+        id: req.user!.id,
+        role: req.user!.role,
+      });
       return success(res, project);
     } catch (err) {
       next(err);
@@ -40,11 +41,14 @@ export class ProjectController {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const project = await projectService.create(req.body, req.user!.id);
+      const project = await projectService.createProject(req.body, {
+        id: req.user!.id,
+        role: req.user!.role,
+      });
       await createAuditLog(
         req.user!.id,
         'CREATE',
-        'Project',
+        'PROJECT',
         project.id,
         null,
         project,
@@ -58,19 +62,10 @@ export class ProjectController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const existing = await projectService.getById(
+      const project = await projectService.updateProject(
         asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
-      const project = await projectService.update(asString(req.params.id), req.body);
-      await createAuditLog(
-        req.user!.id,
-        'UPDATE',
-        'Project',
-        project.id,
-        existing,
-        project,
+        req.body,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
       return success(res, project, 'Project updated');
@@ -81,22 +76,25 @@ export class ProjectController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const existing = await projectService.getById(
+      await projectService.deleteProject(
         asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
-      await projectService.softDelete(asString(req.params.id));
-      await createAuditLog(
-        req.user!.id,
-        'DELETE',
-        'Project',
-        asString(req.params.id),
-        existing,
-        null,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
       return success(res, null, 'Project deleted');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async archive(req: Request, res: Response, next: NextFunction) {
+    try {
+      const project = await projectService.archiveProject(
+        asString(req.params.id),
+        { id: req.user!.id, role: req.user!.role },
+        req.ip
+      );
+      return success(res, project, 'Project archived');
     } catch (err) {
       next(err);
     }

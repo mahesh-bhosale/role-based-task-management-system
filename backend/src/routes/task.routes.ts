@@ -21,30 +21,41 @@ router.get(
   validate(listTasksQuerySchema, 'query'),
   taskController.list.bind(taskController)
 );
-router.get(
-  '/:id',
-  validate(taskIdParamSchema, 'params'),
-  taskController.getById.bind(taskController)
-);
+
 router.post(
   '/',
   authorize(Role.ADMIN, Role.PROJECT_MANAGER),
   validate(createTaskSchema),
   taskController.create.bind(taskController)
 );
-router.patch(
+
+router.get(
+  '/:id/history',
+  validate(taskIdParamSchema, 'params'),
+  taskController.history.bind(taskController)
+);
+
+router.get(
+  '/:id',
+  validate(taskIdParamSchema, 'params'),
+  taskController.getById.bind(taskController)
+);
+
+router.put(
   '/:id',
   validate(taskIdParamSchema, 'params'),
   validate(updateTaskSchema),
   taskController.update.bind(taskController)
 );
+
 router.delete(
   '/:id',
   authorize(Role.ADMIN, Role.PROJECT_MANAGER),
   validate(taskIdParamSchema, 'params'),
   taskController.remove.bind(taskController)
 );
-router.post(
+
+router.patch(
   '/:id/assign',
   authorize(Role.ADMIN, Role.PROJECT_MANAGER),
   validate(taskIdParamSchema, 'params'),

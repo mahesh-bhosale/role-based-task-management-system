@@ -16,6 +16,13 @@ export interface PaginatedResult<T> {
   };
 }
 
+export interface PaginatedListResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class AppError extends Error {
   constructor(
     public statusCode: number,

@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { TaskPriority, TaskStatus } from '@prisma/client';
 import { taskService } from '../services/task.service';
-import { createAuditLog } from '../middlewares/auditLogger';
 import { success } from '../utils/response';
 import { getPagination } from '../utils/pagination';
 import { asString } from '../utils/params';
@@ -10,16 +9,41 @@ export class TaskController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const pagination = getPagination(req.query as Record<string, unknown>);
-      const result = await taskService.list(
-        pagination,
+      const result = await taskService.getTasks(
         {
           projectId: req.query.projectId as string | undefined,
           status: req.query.status as TaskStatus | undefined,
           priority: req.query.priority as TaskPriority | undefined,
+          assignedUserId: req.query.assignedUserId as string | undefined,
+          deadlineBefore: req.query.deadlineBefore
+            ? new Date(String(req.query.deadlineBefore))
+            : undefined,
+          deadlineAfter: req.query.deadlineAfter
+            ? new Date(String(req.query.deadlineAfter))
+            : undefined,
           search: req.query.search as string | undefined,
         },
-        req.user!.id,
-        req.user!.role
+        pagination,
+        { id: req.user!.id, role: req.user!.role }
+      );
+      return success(res, result);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async listByProject(req: Request, res: Response, next: NextFunction) {
+    try {
+      const pagination = getPagination(req.query as Record<string, unknown>);
+      const result = await taskService.getProjectTasks(
+        asString(req.params.projectId),
+        {
+          status: req.query.status as TaskStatus | undefined,
+          priority: req.query.priority as TaskPriority | undefined,
+          search: req.query.search as string | undefined,
+        },
+        pagination,
+        { id: req.user!.id, role: req.user!.role }
       );
       return success(res, result);
     } catch (err) {
@@ -29,11 +53,10 @@ export class TaskController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const task = await taskService.getById(
-        asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
+      const task = await taskService.getTaskById(asString(req.params.id), {
+        id: req.user!.id,
+        role: req.user!.role,
+      });
       return success(res, task);
     } catch (err) {
       next(err);
@@ -42,14 +65,9 @@ export class TaskController {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const task = await taskService.create(req.body, req.user!.id);
-      await createAuditLog(
-        req.user!.id,
-        'CREATE',
-        'Task',
-        task!.id,
-        null,
-        task,
+      const task = await taskService.createTask(
+        req.body,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
       return success(res, task, 'Task created', 201);
@@ -60,19 +78,10 @@ export class TaskController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const existing = await taskService.getById(
+      const task = await taskService.updateTask(
         asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
-      const task = await taskService.update(asString(req.params.id), req.body);
-      await createAuditLog(
-        req.user!.id,
-        'UPDATE',
-        'Task',
-        task.id,
-        existing,
-        task,
+        req.body,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
       return success(res, task, 'Task updated');
@@ -83,19 +92,9 @@ export class TaskController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const existing = await taskService.getById(
+      await taskService.deleteTask(
         asString(req.params.id),
-        req.user!.id,
-        req.user!.role
-      );
-      await taskService.softDelete(asString(req.params.id));
-      await createAuditLog(
-        req.user!.id,
-        'DELETE',
-        'Task',
-        asString(req.params.id),
-        existing,
-        null,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
       return success(res, null, 'Task deleted');
@@ -106,21 +105,25 @@ export class TaskController {
 
   async assign(req: Request, res: Response, next: NextFunction) {
     try {
-      const task = await taskService.assignUsers(
+      const task = await taskService.assignTask(
         asString(req.params.id),
-        req.body.userIds,
-        req.user!.id
-      );
-      await createAuditLog(
-        req.user!.id,
-        'ASSIGN',
-        'Task',
-        asString(req.params.id),
-        null,
-        { userIds: req.body.userIds },
+        req.body.userId,
+        { id: req.user!.id, role: req.user!.role },
         req.ip
       );
-      return success(res, task, 'Users assigned to task');
+      return success(res, task, 'Task assigned');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async history(req: Request, res: Response, next: NextFunction) {
+    try {
+      const logs = await taskService.getTaskHistory(asString(req.params.id), {
+        id: req.user!.id,
+        role: req.user!.role,
+      });
+      return success(res, logs);
     } catch (err) {
       next(err);
     }
