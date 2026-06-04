@@ -5,32 +5,35 @@ import { authenticate } from '../middlewares/authenticate';
 import { authorize } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
 import {
-  projectReportQuerySchema,
-  userReportQuerySchema,
-  taskReportQuerySchema,
+  projectIdParamSchema,
+  userIdParamSchema,
 } from '../validators/report.validator';
 
 const router = Router();
 
 router.use(authenticate);
 
+// ── GET /api/reports/overview — Admin only ────────────────────────────────────
 router.get(
-  '/projects',
+  '/overview',
+  authorize(Role.ADMIN),
+  reportController.overviewReport.bind(reportController)
+);
+
+// ── GET /api/reports/project/:projectId — Admin or PM (own projects only) ─────
+router.get(
+  '/project/:projectId',
   authorize(Role.ADMIN, Role.PROJECT_MANAGER),
-  validate(projectReportQuerySchema, 'query'),
+  validate(projectIdParamSchema, 'params'),
   reportController.projectReport.bind(reportController)
 );
+
+// ── GET /api/reports/employee/:userId — Admin or PM (their project employees) ─
 router.get(
-  '/users',
+  '/employee/:userId',
   authorize(Role.ADMIN, Role.PROJECT_MANAGER),
-  validate(userReportQuerySchema, 'query'),
-  reportController.userReport.bind(reportController)
-);
-router.get(
-  '/tasks',
-  authorize(Role.ADMIN, Role.PROJECT_MANAGER),
-  validate(taskReportQuerySchema, 'query'),
-  reportController.taskReport.bind(reportController)
+  validate(userIdParamSchema, 'params'),
+  reportController.employeeReport.bind(reportController)
 );
 
 export default router;

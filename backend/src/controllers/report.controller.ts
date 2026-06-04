@@ -1,16 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
-import { reportService } from '../services/report.service';
+import {
+  getProjectReport,
+  getEmployeeReport,
+  getOverviewReport,
+} from '../services/report.service';
 import { success } from '../utils/response';
+import { asString } from '../utils/params';
 
 export class ReportController {
+  /** GET /api/reports/project/:projectId — Admin or PM (own projects only) */
   async projectReport(req: Request, res: Response, next: NextFunction) {
     try {
-      const report = await reportService.projectReport(
-        {
-          projectId: req.query.projectId as string | undefined,
-          from: req.query.from ? new Date(req.query.from as string) : undefined,
-          to: req.query.to ? new Date(req.query.to as string) : undefined,
-        },
+      const report = await getProjectReport(
+        asString(req.params.projectId),
+        req.user!.id,
         req.user!.role
       );
       return success(res, report);
@@ -19,14 +22,12 @@ export class ReportController {
     }
   }
 
-  async userReport(req: Request, res: Response, next: NextFunction) {
+  /** GET /api/reports/employee/:userId — Admin or PM (employees in their projects) */
+  async employeeReport(req: Request, res: Response, next: NextFunction) {
     try {
-      const report = await reportService.userReport(
-        {
-          userId: req.query.userId as string | undefined,
-          from: req.query.from ? new Date(req.query.from as string) : undefined,
-          to: req.query.to ? new Date(req.query.to as string) : undefined,
-        },
+      const report = await getEmployeeReport(
+        asString(req.params.userId),
+        req.user!.id,
         req.user!.role
       );
       return success(res, report);
@@ -35,12 +36,10 @@ export class ReportController {
     }
   }
 
-  async taskReport(req: Request, res: Response, next: NextFunction) {
+  /** GET /api/reports/overview — Admin only */
+  async overviewReport(req: Request, res: Response, next: NextFunction) {
     try {
-      const report = await reportService.taskReport({
-        projectId: req.query.projectId as string | undefined,
-        status: req.query.status as string | undefined,
-      });
+      const report = await getOverviewReport(req.user!.id, req.user!.role);
       return success(res, report);
     } catch (err) {
       next(err);

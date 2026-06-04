@@ -3,6 +3,7 @@ import { dashboardService } from '../services/dashboard.service';
 import { success } from '../utils/response';
 
 export class DashboardController {
+  /** GET /api/dashboard — role-aware, returns different shape per role */
   async getStats(req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await dashboardService.getStats(req.user!.id, req.user!.role);
