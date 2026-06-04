@@ -8,11 +8,11 @@ export class AuditService {
     pagination: PaginationParams,
     filters: {
       userId?: string;
-      entity?: string;
       action?: string;
+      entity?: string;
       entityId?: string;
-      from?: Date;
-      to?: Date;
+      dateFrom?: Date;
+      dateTo?: Date;
     },
     role: Role
   ): Promise<PaginatedResult<unknown>> {
@@ -22,14 +22,14 @@ export class AuditService {
 
     const where: Prisma.AuditLogWhereInput = {
       ...(filters.userId && { userId: filters.userId }),
-      ...(filters.entity && { entity: filters.entity }),
       ...(filters.action && { action: filters.action }),
+      ...(filters.entity && { entity: filters.entity }),
       ...(filters.entityId && { entityId: filters.entityId }),
-      ...(filters.from || filters.to
+      ...(filters.dateFrom || filters.dateTo
         ? {
             createdAt: {
-              ...(filters.from && { gte: filters.from }),
-              ...(filters.to && { lte: filters.to }),
+              ...(filters.dateFrom && { gte: filters.dateFrom }),
+              ...(filters.dateTo && { lte: filters.dateTo }),
             },
           }
         : {}),

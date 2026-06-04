@@ -18,3 +18,13 @@ export const updateUserSchema = z.object({
 export const userIdParamSchema = z.object({
   id: z.string().uuid(),
 });
+
+export const listUsersQuerySchema = z.object({
+  role: z.nativeEnum(Role).optional(),
+  isActive: z
+    .string()
+    .optional()
+    .transform((v) => (v === 'true' ? true : v === 'false' ? false : undefined)),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
+});

@@ -11,11 +11,11 @@ export class AuditController {
         pagination,
         {
           userId: req.query.userId as string | undefined,
-          entity: req.query.entity as string | undefined,
           action: req.query.action as string | undefined,
+          entity: req.query.entity as string | undefined,
           entityId: req.query.entityId as string | undefined,
-          from: req.query.from ? new Date(req.query.from as string) : undefined,
-          to: req.query.to ? new Date(req.query.to as string) : undefined,
+          dateFrom: req.query.dateFrom ? new Date(req.query.dateFrom as string) : undefined,
+          dateTo: req.query.dateTo ? new Date(req.query.dateTo as string) : undefined,
         },
         req.user!.role
       );

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { Prisma, Role } from '@prisma/client';
 import { userService } from '../services/user.service';
 import { createAuditLog } from '../middlewares/auditLogger';
 import { success } from '../utils/response';
@@ -9,7 +10,8 @@ export class UserController {
   async list(req: Request, res: Response, next: NextFunction) {
     try {
       const pagination = getPagination(req.query as Record<string, unknown>);
-      const result = await userService.list(pagination);
+      const role = req.query.role as Role | undefined;
+      const result = await userService.list(pagination, { role });
       return success(res, result);
     } catch (err) {
       next(err);
@@ -31,10 +33,10 @@ export class UserController {
       await createAuditLog(
         req.user!.id,
         'CREATE',
-        'User',
+        'USER',
         user.id,
         null,
-        user,
+        user as unknown as Prisma.InputJsonValue,
         req.ip
       );
       return success(res, user, 'User created', 201);
@@ -50,10 +52,10 @@ export class UserController {
       await createAuditLog(
         req.user!.id,
         'UPDATE',
-        'User',
+        'USER',
         user.id,
-        existing,
-        user,
+        existing as unknown as Prisma.InputJsonValue,
+        user as unknown as Prisma.InputJsonValue,
         req.ip
       );
       return success(res, user, 'User updated');
@@ -69,10 +71,10 @@ export class UserController {
       await createAuditLog(
         req.user!.id,
         'DEACTIVATE',
-        'User',
+        'USER',
         user.id,
-        existing,
-        user,
+        existing as unknown as Prisma.InputJsonValue,
+        user as unknown as Prisma.InputJsonValue,
         req.ip
       );
       return success(res, user, 'User deactivated');

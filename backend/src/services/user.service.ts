@@ -1,10 +1,10 @@
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError, PaginatedResult } from '../types/shared';
 import { PaginationParams } from '../utils/pagination';
 import { hashPassword } from '../utils/hash';
 
-const userSelect = {
+const userSelectPublic = {
   id: true,
   name: true,
   email: true,
@@ -15,8 +15,13 @@ const userSelect = {
 };
 
 export class UserService {
-  async list(pagination: PaginationParams): Promise<PaginatedResult<unknown>> {
-    const where = { isActive: true };
+  async list(
+    pagination: PaginationParams,
+    filters: { role?: Role; isActive?: boolean }
+  ): Promise<PaginatedResult<unknown>> {
+    const where: Prisma.UserWhereInput = {};
+    if (filters.role) where.role = filters.role;
+    if (filters.isActive !== undefined) where.isActive = filters.isActive;
 
     const [items, total] = await Promise.all([
       prisma.user.findMany({
@@ -24,13 +29,24 @@ export class UserService {
         skip: pagination.skip,
         take: pagination.take,
         orderBy: { createdAt: 'desc' },
-        select: userSelect,
+        select: {
+          ...userSelectPublic,
+          _count: {
+            select: { taskAssignments: true },
+          },
+        },
       }),
       prisma.user.count({ where }),
     ]);
 
+    // Flatten _count into a taskCount field for cleaner response
+    const data = (items as Array<typeof items[number] & { _count?: { taskAssignments: number } }>).map((u) => {
+      const { _count, ...rest } = u as typeof u & { _count: { taskAssignments: number } };
+      return { ...rest, taskCount: _count?.taskAssignments ?? 0 };
+    });
+
     return {
-      items,
+      items: data,
       meta: {
         page: pagination.page,
         limit: pagination.limit,
@@ -43,7 +59,35 @@ export class UserService {
   async getById(id: string) {
     const user = await prisma.user.findUnique({
       where: { id },
-      select: userSelect,
+      select: {
+        ...userSelectPublic,
+        taskAssignments: {
+          orderBy: { assignedAt: 'desc' },
+          include: {
+            task: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+                priority: true,
+                deadline: true,
+                project: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
+        workLogs: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: {
+            id: true,
+            description: true,
+            hoursWorked: true,
+            createdAt: true,
+            task: { select: { id: true, name: true } },
+          },
+        },
+      },
     });
     if (!user) {
       throw new AppError(404, 'User not found');
@@ -60,7 +104,7 @@ export class UserService {
     const hashed = await hashPassword(data.password);
     return prisma.user.create({
       data: { ...data, password: hashed },
-      select: userSelect,
+      select: userSelectPublic,
     });
   }
 
@@ -83,7 +127,7 @@ export class UserService {
     return prisma.user.update({
       where: { id },
       data,
-      select: userSelect,
+      select: userSelectPublic,
     });
   }
 
@@ -96,7 +140,7 @@ export class UserService {
     return prisma.user.update({
       where: { id },
       data: { isActive: false },
-      select: userSelect,
+      select: userSelectPublic,
     });
   }
 }
