@@ -9,6 +9,7 @@ import auditRoutes from './audit.routes';
 import reportRoutes from './report.routes';
 import dashboardRoutes from './dashboard.routes';
 import userRoutes from './user.routes';
+import adminRoutes from './admin.routes';
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use('/notifications', notificationRoutes);
 router.use('/audit-logs', auditRoutes);
 router.use('/reports', reportRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;

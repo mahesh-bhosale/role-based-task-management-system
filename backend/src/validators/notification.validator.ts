@@ -5,10 +5,11 @@ export const notificationIdParamSchema = z.object({
 });
 
 export const listNotificationsQuerySchema = z.object({
-  page: z.coerce.number().optional(),
-  limit: z.coerce.number().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().optional(),
   status: z.string().optional(),
   type: z.string().optional(),
+  isRead: z.enum(['true', 'false']).optional(),
 });
 
 export const createNotificationSchema = z.object({

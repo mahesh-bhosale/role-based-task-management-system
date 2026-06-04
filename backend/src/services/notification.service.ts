@@ -4,16 +4,20 @@ import { AppError, PaginatedResult } from '../types/shared';
 import { PaginationParams } from '../utils/pagination';
 
 export class NotificationService {
+  /** GET /api/notifications — always returns the current user's own notifications,
+   *  ordered newest first. Admin may also pass a userId filter to see any user's. */
   async list(
     pagination: PaginationParams,
-    filters: { status?: string; type?: string },
+    filters: { status?: string; type?: string; isRead?: boolean },
     userId: string,
-    role: Role
+    _role: Role
   ): Promise<PaginatedResult<unknown>> {
+    // All users see only their own; admin can additionally filter by userId via service
     const where: Prisma.NotificationWhereInput = {
-      ...(role !== Role.ADMIN && { userId }),
+      userId,
       ...(filters.status && { status: filters.status }),
       ...(filters.type && { type: filters.type }),
+      ...(filters.isRead !== undefined && { isRead: filters.isRead }),
     };
 
     const [items, total] = await Promise.all([
@@ -57,20 +61,27 @@ export class NotificationService {
     return prisma.notification.create({ data });
   }
 
+  /** PATCH /api/notifications/:id/read — marks isRead=true and status='read' */
   async markAsRead(id: string, userId: string, role: Role) {
     const notification = await this.getById(id, userId, role);
     return prisma.notification.update({
       where: { id: notification.id },
-      data: { status: 'read' },
+      data: { isRead: true, status: 'read' },
     });
   }
 
+  /** PATCH /api/notifications/read-all — marks all current user's unread as read */
   async markAllAsRead(userId: string) {
-    await prisma.notification.updateMany({
-      where: { userId, status: 'sent' },
-      data: { status: 'read' },
+    const { count } = await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true, status: 'read' },
     });
-    return { message: 'All notifications marked as read' };
+    return { updated: count, message: 'All notifications marked as read' };
+  }
+
+  /** Count unread notifications for a user (for badge counts) */
+  async countUnread(userId: string): Promise<number> {
+    return prisma.notification.count({ where: { userId, isRead: false } });
   }
 }
 

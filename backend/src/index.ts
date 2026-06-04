@@ -5,7 +5,13 @@ import { startDeadlineChecker } from './jobs/deadlineChecker';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
-  startDeadlineChecker();
+
+  // Start background scheduler only when explicitly enabled
+  if (env.ENABLE_SCHEDULER) {
+    startDeadlineChecker();
+  } else {
+    console.log('[DeadlineChecker] Scheduler disabled (ENABLE_SCHEDULER != true)');
+  }
 
   const server = app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);

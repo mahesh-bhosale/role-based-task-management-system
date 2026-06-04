@@ -176,12 +176,14 @@ model Notification {
   entityId  String?  @map("entity_id") @db.Char(36)
   sentAt    DateTime @default(now()) @map("sent_at")
   status    String   @default("sent") @db.VarChar(50)
+  isRead    Boolean  @default(false) @map("is_read")
 
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([type])
   @@index([status])
+  @@index([isRead])
   @@index([sentAt])
   @@map("notifications")
 }
