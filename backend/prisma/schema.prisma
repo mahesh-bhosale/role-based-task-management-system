@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PROJECT_MANAGER
+  EMPLOYEE
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  COMPLETED
+  BLOCKED
+}
+
+model User {
+  id                String    @id @default(uuid()) @db.Char(36)
+  name              String    @db.VarChar(255)
+  email             String    @unique @db.VarChar(255)
+  password          String    @db.VarChar(255)
+  role              Role      @default(EMPLOYEE)
+  isActive          Boolean   @default(true) @map("is_active")
+  resetToken        String?   @map("reset_token") @db.VarChar(255)
+  resetTokenExpiry  DateTime? @map("reset_token_expiry")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  managedProjects     Project[]        @relation("ProjectManager")
+  createdProjects     Project[]        @relation("ProjectCreator")
+  createdTasks        Task[]           @relation("TaskCreator")
+  taskAssignments     TaskAssignment[] @relation("AssignedUser")
+  assignmentsMade     TaskAssignment[] @relation("AssignedBy")
+  workLogs            WorkLog[]
+  logReplies          LogReply[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  refreshTokens       RefreshToken[]
+
+  @@index([role])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(uuid()) @db.Char(36)
+  name        String        @db.VarChar(255)
+  description String?       @db.Text
+  startDate   DateTime?     @map("start_date")
+  endDate     DateTime?     @map("end_date")
+  status      ProjectStatus @default(PLANNING)
+  managerId   String?       @map("manager_id") @db.Char(36)
+  createdById String        @map("created_by_id") @db.Char(36)
+  deletedAt   DateTime?     @map("deleted_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  manager   User?  @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+  createdBy User   @relation("ProjectCreator", fields: [createdById], references: [id])
+  tasks     Task[]
+
+  @@index([managerId])
+  @@index([createdById])
+  @@index([status])
+  @@index([deletedAt])
+  @@map("projects")
+}
+
+model Task {
+  id             String       @id @default(uuid()) @db.Char(36)
+  name           String       @db.VarChar(255)
+  description    String?      @db.Text
+  priority       TaskPriority
+  status         TaskStatus   @default(TODO)
+  deadline       DateTime?
+  estimatedHours Float?       @map("estimated_hours")
+  projectId      String       @map("project_id") @db.Char(36)
+  createdById    String       @map("created_by_id") @db.Char(36)
+  deletedAt      DateTime?    @map("deleted_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  project     Project          @relation(fields: [projectId], references: [id])
+  createdBy   User             @relation("TaskCreator", fields: [createdById], references: [id])
+  assignments TaskAssignment[]
+  workLogs    WorkLog[]
+
+  @@index([projectId])
+  @@index([createdById])
+  @@index([status])
+  @@index([priority])
+  @@index([deadline])
+  @@index([deletedAt])
+  @@map("tasks")
+}
+
+model TaskAssignment {
+  id           String   @id @default(uuid()) @db.Char(36)
+  taskId       String   @map("task_id") @db.Char(36)
+  userId       String   @map("user_id") @db.Char(36)
+  assignedById String   @map("assigned_by_id") @db.Char(36)
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+
+  task       Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User @relation("AssignedUser", fields: [userId], references: [id])
+  assignedBy User @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([assignedById])
+  @@map("task_assignments")
+}
+
+model WorkLog {
+  id            String   @id @default(uuid()) @db.Char(36)
+  description   String   @db.Text
+  hoursWorked   Float    @map("hours_worked")
+  attachmentUrl String?  @map("attachment_url") @db.VarChar(500)
+  taskId        String   @map("task_id") @db.Char(36)
+  userId        String   @map("user_id") @db.Char(36)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  task    Task       @relation(fields: [taskId], references: [id])
+  user    User       @relation(fields: [userId], references: [id])
+  replies LogReply[]
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("work_logs")
+}
+
+model LogReply {
+  id        String   @id @default(uuid()) @db.Char(36)
+  message   String   @db.Text
+  workLogId String   @map("work_log_id") @db.Char(36)
+  userId    String   @map("user_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  workLog WorkLog @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@index([workLogId])
+  @@index([userId])
+  @@map("log_replies")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @map("user_id") @db.Char(36)
+  type      String   @db.VarChar(100)
+  message   String   @db.Text
+  entityId  String?  @map("entity_id") @db.Char(36)
+  sentAt    DateTime @default(now()) @map("sent_at")
+  status    String   @default("sent") @db.VarChar(50)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([sentAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Char(36)
+  userId        String?  @map("user_id") @db.Char(36)
+  action        String   @db.VarChar(100)
+  entity        String   @db.VarChar(100)
+  entityId      String   @map("entity_id") @db.VarChar(36)
+  previousValue Json?    @map("previous_value")
+  newValue      Json?    @map("new_value")
+  ipAddress     String?  @map("ip_address") @db.VarChar(45)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Char(36)
+  token     String   @unique @db.VarChar(500)
+  userId    String   @map("user_id") @db.Char(36)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
