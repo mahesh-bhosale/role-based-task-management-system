@@ -3,12 +3,16 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { Login } from './pages/auth/Login';
-import { Dashboard } from './pages/dashboard/Dashboard';
-import { ProjectList } from './pages/projects/ProjectList';
-import { TaskList } from './pages/tasks/TaskList';
+import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { ProjectsPage } from './pages/projects/ProjectsPage';
+import { ProjectDetailPage } from './pages/projects/ProjectDetailPage';
+import { ProjectFormPage } from './pages/projects/ProjectFormPage';
+import { TasksPage } from './pages/tasks/TasksPage';
+import { TaskDetailPage } from './pages/tasks/TaskDetailPage';
+import { TaskFormPage } from './pages/tasks/TaskFormPage';
 import { WorklogList } from './pages/worklogs/WorklogList';
 import { OverviewReport, ProjectReport, EmployeeReport } from './pages/reports/Reports';
-import { UserList, AuditLogs, ProjectDetails, ProjectForm, TaskDetails, TaskForm } from './pages/PlaceholderPages';
+import { UserList, AuditLogs } from './pages/PlaceholderPages';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
@@ -27,18 +31,19 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         
         {/* Projects */}
-        <Route path="/projects" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectList /></ProtectedRoute>} />
-        <Route path="/projects/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProjectForm /></ProtectedRoute>} />
-        <Route path="/projects/:id" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectDetails /></ProtectedRoute>} />
-        <Route path="/projects/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectForm /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectsPage /></ProtectedRoute>} />
+        <Route path="/projects/new" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProjectFormPage /></ProtectedRoute>} />
+        <Route path="/projects/:id" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectDetailPage /></ProtectedRoute>} />
+        <Route path="/projects/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectFormPage /></ProtectedRoute>} />
 
         {/* Tasks */}
-        <Route path="/tasks" element={<TaskList />} />
-        <Route path="/tasks/new" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><TaskForm /></ProtectedRoute>} />
-        <Route path="/tasks/:id" element={<TaskDetails />} />
+        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/tasks/new" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><TaskFormPage /></ProtectedRoute>} />
+        <Route path="/tasks/:id/edit" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><TaskFormPage /></ProtectedRoute>} />
+        <Route path="/tasks/:id" element={<TaskDetailPage />} />
 
         {/* Worklogs */}
         <Route path="/worklogs" element={<WorklogList />} />

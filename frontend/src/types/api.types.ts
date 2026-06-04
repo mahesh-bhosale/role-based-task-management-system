@@ -56,6 +56,10 @@ export interface Task {
   project?: { id: string; name: string };
   assignments?: TaskAssignment[];
   workLogsCount?: number;
+  assignee?: { id: string; name: string; email?: string };
+  assigneeId?: string;
+  createdBy?: { id: string; name: string; email?: string };
+  auditLogs?: AuditLog[];
 }
 
 export interface LogReply {
