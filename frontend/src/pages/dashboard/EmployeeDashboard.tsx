@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { AlertCircle, CheckSquare, Clock, BarChart3, Activity } from 'lucide-react';
 import { formatDateTime } from '../../lib/utils';
@@ -34,6 +35,7 @@ interface EmployeeDashboardProps {
 }
 
 export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) => {
+  const navigate = useNavigate();
   const statusData = useMemo(() => {
     return [
       { name: 'To Do', value: data.tasksByStatus.todo, color: '#94a3b8' },
@@ -62,7 +64,11 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) =>
           <CardContent>
             <div className="space-y-3 mt-2">
               {(data.dueSoonTasks ?? []).map((t) => (
-                <div key={t.id} className="flex flex-col gap-2 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                <div 
+                  key={t.id} 
+                  onClick={() => navigate(`/tasks/${t.id}`)}
+                  className="flex flex-col gap-2 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50 cursor-pointer hover:bg-slate-800 transition-colors"
+                >
                   <div className="flex justify-between items-start">
                     <p className="font-semibold text-white">{t.name}</p>
                     <PriorityBadge priority={t.priority} />

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -108,9 +109,11 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-slate-800" />
-            <DropdownMenuItem className="text-slate-300 focus:bg-slate-800 focus:text-white cursor-pointer">
-              <UserCircle className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild className="text-slate-300 focus:bg-slate-800 focus:text-white cursor-pointer">
+              <Link to="/profile">
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={() => logout()}

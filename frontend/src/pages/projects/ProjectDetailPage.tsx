@@ -47,7 +47,7 @@ export const ProjectDetailPage: React.FC = () => {
     { header: 'Name', accessorKey: 'name' as keyof Task, className: 'font-medium text-white' },
     { header: 'Priority', cell: (t: Task) => <PriorityBadge priority={t.priority} /> },
     { header: 'Status', cell: (t: Task) => <StatusBadge status={t.status} type="task" /> },
-    { header: 'Assignee', cell: (t: Task) => <span className="text-slate-300">{t.assignee?.name || 'Unassigned'}</span> },
+    { header: 'Assignee', cell: (t: Task) => <span className="text-slate-300">{t.assignments?.[0]?.user?.name || t.assignee?.name || 'Unassigned'}</span> },
     { header: 'Deadline', cell: (t: Task) => <span className="text-slate-400">{formatDateTime(t.deadline)}</span> },
   ];
 

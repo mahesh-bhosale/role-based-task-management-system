@@ -112,7 +112,7 @@ export const ProjectsPage: React.FC = () => {
         ) : null}
       />
 
-      <div className="flex gap-4 mb-6 p-4 bg-slate-900 border border-slate-700 rounded-xl">
+      <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-slate-900 border border-slate-700 rounded-xl">
         <div className="text-sm text-slate-400">Filters:</div>
         <select 
           className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2"

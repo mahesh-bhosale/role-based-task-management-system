@@ -16,6 +16,7 @@ import { ReportsPage } from './pages/reports/ReportsPage';
 import { ReportsOverviewPage } from './pages/reports/ReportsOverviewPage';
 import { UsersPage } from './pages/users/UsersPage';
 import { AuditLogsPage } from './pages/audit/AuditLogsPage';
+import { ProfilePage } from './pages/profile/ProfilePage';
 import { LoadingSpinner } from './components/shared/LoadingSpinner';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
@@ -35,6 +36,7 @@ function AppRoutes() {
       
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         
         {/* Projects */}
         <Route path="/projects" element={<ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}><ProjectsPage /></ProtectedRoute>} />
