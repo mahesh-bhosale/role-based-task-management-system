@@ -164,15 +164,22 @@ To reset the database: `docker-compose down -v` (removes volumes)
 
 ## Demo Credentials
 
-After seeding, the following accounts are available:
+## Demo Credentials
 
-| Role | Email | Password |
-|------|-------|----------|
-| **Admin** | `admin@demo.com` | `Admin@123` |
-| **Project Manager** | `pm@demo.com` | `PM@123` |
-| **Employee** | `emp1@demo.com` | `Emp@123` |
-| **Employee** | `emp2@demo.com` | `Emp@123` |
+The following demo accounts are available for testing different roles and permissions:
 
+| Role | Name | Email |
+|------|------|--------|
+| **Admin** | System Admin | admin@demo.com |
+| **Project Manager** | Rahul Sharma | rahul.pm@company.com |
+| **Project Manager** | Priya Patel | priya.pm@company.com |
+| **Project Manager** | Project Manager | pm@demo.com |
+| **Employee** | Amit Verma | amit.emp@company.com |
+| **Employee** | Sneha Joshi | sneha.emp@company.com |
+| **Employee** | Employee One | emp1@demo.com |
+| **Employee** | Employee Two | emp2@demo.com |
+
+> Passwords can be configured through the database seed file or environment setup.
 ---
 
 ## API Documentation

@@ -35,11 +35,11 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-this-refresh-secret-in-production}
       ACCESS_TOKEN_EXPIRY: ${ACCESS_TOKEN_EXPIRY:-15m}
       REFRESH_TOKEN_EXPIRY: ${REFRESH_TOKEN_EXPIRY:-7d}
-      SMTP_HOST: ${SMTP_HOST:-smtp.example.com}
-      SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASS: ${SMTP_PASS:-}
-      EMAIL_FROM: ${EMAIL_FROM:-noreply@taskflow.com}
+      SMTP_HOST: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      SMTP_PORT: ${SMTP_PORT:-2525}
+      SMTP_USER: ${SMTP_USER:-0a2aed145130e7}
+      SMTP_PASS: ${SMTP_PASS:-00c1f3b09b1434}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@taskmanager.com}
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
       PORT: 5000
       NODE_ENV: production
