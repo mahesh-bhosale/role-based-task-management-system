@@ -338,7 +338,7 @@ const ChangeAssigneeDialog = ({ taskId, currentAssignee, open, onOpenChange }: a
     const valueToSave = newAssignee === 'unassigned' ? null : newAssignee;
     if (valueToSave !== currentAssignee) {
       if (currentAssignee) {
-        await unassignTask.mutateAsync({ id: taskId, userId: currentAssignee });
+        await unassignTask.mutateAsync({ id: taskId });
       }
       if (valueToSave) {
         await assignTask.mutateAsync({ id: taskId, userId: valueToSave });

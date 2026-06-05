@@ -89,7 +89,7 @@ export const useUnassignTask = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: ({ id, userId }: { id: string; userId: string }) => tasksApi.unassignTask(id, userId),
+    mutationFn: ({ id }: { id: string }) => tasksApi.unassignTask(id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.id] });

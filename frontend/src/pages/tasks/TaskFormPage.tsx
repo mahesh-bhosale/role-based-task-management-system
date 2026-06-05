@@ -104,7 +104,7 @@ export const TaskFormPage: React.FC = () => {
         // Handle assignment changes if they differ
         if (newAssigneeId !== oldAssigneeId) {
           if (oldAssigneeId) {
-            await unassignTask.mutateAsync({ id: id as string, userId: oldAssigneeId });
+            await unassignTask.mutateAsync({ id: id as string });
           }
           if (newAssigneeId) {
             await assignTask.mutateAsync({ id: id as string, userId: newAssigneeId });

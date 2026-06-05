@@ -546,7 +546,7 @@ export class TaskService {
     filters: Omit<TaskFilters, 'projectId'>,
     pagination: PaginationParams,
     user: AuthContext
-  ): Promise<PaginatedListResult<unknown>> {
+  ): Promise<PaginatedResult<unknown>> {
     if (user.role === Role.EMPLOYEE) {
       throw new AppError(403, 'You do not have permission to access project tasks');
     }

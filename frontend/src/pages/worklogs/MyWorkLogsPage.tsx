@@ -81,7 +81,6 @@ export const MyWorkLogsPage: React.FC = () => {
   const { data: tasksData, isLoading: tasksLoading } = useTasks({ page, limit: 100 });
 
   const assignedTasks = tasksData?.items ?? [];
-  const totalHours = 0; // computed per-task
 
   return (
     <PageWrapper>

@@ -32,7 +32,7 @@ export const tasksApi = {
     return data.data;
   },
 
-  unassignTask: async (id: string, userId: string) => {
+  unassignTask: async (id: string) => {
     const { data } = await api.delete<ApiResponse<null>>(`/tasks/${id}/assign`);
     return data.data;
   },
