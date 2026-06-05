@@ -19,7 +19,7 @@ export const authApi = {
   },
 
   getProfile: async () => {
-    const { data } = await api.get<ApiResponse<User>>('/auth/profile');
+    const { data } = await api.get<ApiResponse<User>>('/auth/me');
     return data.data;
   },
 };

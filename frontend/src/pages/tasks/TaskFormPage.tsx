@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useTask, useCreateTask, useUpdateTask } from '../../hooks/useTasks';
+import { useTask, useCreateTask, useUpdateTask, useAssignTask, useUnassignTask } from '../../hooks/useTasks';
 import { useProjects } from '../../hooks/useProjects';
 import { useUsers } from '../../hooks/useUsers';
 import { PageWrapper } from '../../components/layout/PageWrapper';
@@ -45,6 +45,8 @@ export const TaskFormPage: React.FC = () => {
   
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+  const assignTask = useAssignTask();
+  const unassignTask = useUnassignTask();
 
   const {
     register,
@@ -61,6 +63,8 @@ export const TaskFormPage: React.FC = () => {
 
   useEffect(() => {
     if (isEdit && task) {
+      // API might return assigneeId or assignments list
+      const currentAssigneeId = task.assignments?.[0]?.userId || task.assignee?.id || task.assigneeId || '';
       reset({
         name: task.name,
         description: task.description || '',
@@ -68,7 +72,7 @@ export const TaskFormPage: React.FC = () => {
         priority: task.priority,
         deadline: task.deadline ? new Date(task.deadline) : undefined,
         estimatedHours: task.estimatedHours || undefined,
-        assigneeId: task.assigneeId || '',
+        assigneeId: currentAssigneeId,
       });
     }
   }, [isEdit, task, reset]);
@@ -77,21 +81,51 @@ export const TaskFormPage: React.FC = () => {
     const payload = {
       ...data,
       deadline: data.deadline?.toISOString(),
-      assigneeId: data.assigneeId || null,
+      assignedToUserId: data.assigneeId || undefined, // Backend schema expects this for create
     };
+    
+    // Remove assigneeId from payload
+    delete payload.assigneeId;
 
-    if (isEdit) {
-      await updateTask.mutateAsync({ id, data: payload as any });
-      navigate(`/tasks/${id}`);
-    } else {
-      await createTask.mutateAsync(payload as any);
-      navigate('/tasks');
+    if (Number.isNaN(payload.estimatedHours)) {
+      delete payload.estimatedHours;
+    }
+
+    try {
+      if (isEdit) {
+        // Remove assignedToUserId from update payload since backend doesn't support it directly
+        delete payload.assignedToUserId;
+        
+        await updateTask.mutateAsync({ id: id as string, data: payload as any });
+        
+        const oldAssigneeId = task?.assignments?.[0]?.userId || task?.assignee?.id || task?.assigneeId;
+        const newAssigneeId = data.assigneeId;
+        
+        // Handle assignment changes if they differ
+        if (newAssigneeId !== oldAssigneeId) {
+          if (oldAssigneeId) {
+            await unassignTask.mutateAsync({ id: id as string, userId: oldAssigneeId });
+          }
+          if (newAssigneeId) {
+            await assignTask.mutateAsync({ id: id as string, userId: newAssigneeId });
+          }
+        }
+        
+        navigate(`/tasks/${id}`);
+      } else {
+        await createTask.mutateAsync(payload as any);
+        navigate('/tasks');
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
   if (isEdit && isLoadingTask) {
     return <PageWrapper><LoadingSpinner size={48} /></PageWrapper>;
   }
+
+  console.log('usersData in TaskFormPage:', usersData);
 
   return (
     <PageWrapper>
@@ -182,13 +216,13 @@ export const TaskFormPage: React.FC = () => {
                   name="assigneeId"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingUsers}>
+                    <Select onValueChange={(val) => field.onChange(val === 'unassigned' ? undefined : val)} value={field.value || 'unassigned'} disabled={isLoadingUsers}>
                       <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                         <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select employee"} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-700 max-h-60">
-                        <SelectItem value="" className="text-slate-400">Unassigned</SelectItem>
-                        {usersData?.items.map((user: any) => (
+                        <SelectItem value="unassigned" className="text-slate-400">Unassigned</SelectItem>
+                        {(Array.isArray(usersData) ? usersData : usersData?.items || []).map((user: any) => (
                           <SelectItem key={user.id} value={user.id} className="text-slate-200 focus:bg-slate-800 focus:text-white">
                             {user.name}
                           </SelectItem>

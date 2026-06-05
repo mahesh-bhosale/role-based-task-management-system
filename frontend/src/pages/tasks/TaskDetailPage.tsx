@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useTask, useUpdateTask } from '../../hooks/useTasks';
+import { useTask, useUpdateTask, useAssignTask, useUnassignTask } from '../../hooks/useTasks';
 import { useTaskWorklogs, useCreateWorklog, useAddReply } from '../../hooks/useWorklogs';
 import { useUsers } from '../../hooks/useUsers';
 import { PageWrapper } from '../../components/layout/PageWrapper';
@@ -34,7 +34,9 @@ export const TaskDetailPage: React.FC = () => {
   if (!task) return <PageWrapper><div className="text-red-500">Task not found.</div></PageWrapper>;
 
   const canEditTask = user?.role === ROLES.ADMIN || user?.role === ROLES.PROJECT_MANAGER;
-  const isAssignee = task.assignee?.id === user?.id;
+  const currentAssigneeId = task.assignments?.[0]?.userId || task.assignee?.id || task.assigneeId;
+  const currentAssigneeName = task.assignments?.[0]?.user?.name || task.assignee?.name;
+  const isAssignee = currentAssigneeId === user?.id;
   const canChangeStatus = canEditTask || isAssignee;
 
   const handleStatusChange = async (newStatus: string) => {
@@ -126,11 +128,11 @@ export const TaskDetailPage: React.FC = () => {
               <div className="flex justify-between items-center py-2 border-b border-slate-800">
                 <span className="text-sm text-slate-400">Assignee</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white">{task.assignee?.name || 'Unassigned'}</span>
+                  <span className="text-sm font-medium text-white">{currentAssigneeName || 'Unassigned'}</span>
                   {canEditTask && (
                     <ChangeAssigneeDialog 
                       taskId={task.id} 
-                      currentAssignee={task.assigneeId || ''} 
+                      currentAssignee={currentAssigneeId || ''} 
                       open={isAssigneeDialogOpen}
                       onOpenChange={setIsAssigneeDialogOpen}
                     />
@@ -328,12 +330,19 @@ const LogWorkDialog = ({ taskId }: { taskId: string }) => {
 
 const ChangeAssigneeDialog = ({ taskId, currentAssignee, open, onOpenChange }: any) => {
   const { data: usersData, isLoading } = useUsers({ role: 'EMPLOYEE', limit: 100 });
-  const updateTask = useUpdateTask();
-  const [newAssignee, setNewAssignee] = useState(currentAssignee);
+  const assignTask = useAssignTask();
+  const unassignTask = useUnassignTask();
+  const [newAssignee, setNewAssignee] = useState(currentAssignee || 'unassigned');
 
   const handleSave = async () => {
-    if (newAssignee !== currentAssignee) {
-      await updateTask.mutateAsync({ id: taskId, data: { assigneeId: newAssignee } as any });
+    const valueToSave = newAssignee === 'unassigned' ? null : newAssignee;
+    if (valueToSave !== currentAssignee) {
+      if (currentAssignee) {
+        await unassignTask.mutateAsync({ id: taskId, userId: currentAssignee });
+      }
+      if (valueToSave) {
+        await assignTask.mutateAsync({ id: taskId, userId: valueToSave });
+      }
     }
     onOpenChange(false);
   };
@@ -353,14 +362,14 @@ const ChangeAssigneeDialog = ({ taskId, currentAssignee, open, onOpenChange }: a
               <SelectValue placeholder="Select employee" />
             </SelectTrigger>
             <SelectContent className="bg-slate-900 border-slate-700">
-              <SelectItem value="" className="text-slate-400">Unassigned</SelectItem>
+              <SelectItem value="unassigned" className="text-slate-400">Unassigned</SelectItem>
               {usersData?.items.map((u: any) => (
                 <SelectItem key={u.id} value={u.id} className="text-slate-200">{u.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={updateTask.isPending || newAssignee === currentAssignee}>
+            <Button onClick={handleSave} disabled={assignTask.isPending || unassignTask.isPending || newAssignee === (currentAssignee || 'unassigned')}>
               Save Assignment
             </Button>
           </div>

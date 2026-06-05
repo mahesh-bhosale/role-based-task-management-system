@@ -1,6 +1,6 @@
 import { Prisma, ProjectStatus, Role, TaskStatus } from '@prisma/client';
 import { prisma } from '../config/database';
-import { AppError, PaginatedListResult } from '../types/shared';
+import { AppError, PaginatedResult } from '../types/shared';
 import { PaginationParams } from '../utils/pagination';
 
 function toJsonValue(
@@ -13,6 +13,7 @@ function toJsonValue(
 export interface ProjectFilters {
   status?: ProjectStatus;
   managerId?: string;
+  managerName?: string;
   startDate?: Date;
   endDate?: Date;
   search?: string;
@@ -121,7 +122,7 @@ export class ProjectService {
     filters: ProjectFilters,
     pagination: PaginationParams,
     user: AuthContext
-  ): Promise<PaginatedListResult<unknown>> {
+  ): Promise<PaginatedResult<unknown>> {
     this.assertNotEmployee(user.role);
 
     const andFilters: Prisma.ProjectWhereInput[] = [{ deletedAt: null }];
@@ -137,6 +138,9 @@ export class ProjectService {
           { description: { contains: filters.search } },
         ],
       });
+    }
+    if (filters.managerName) {
+      andFilters.push({ manager: { name: { contains: filters.managerName } } });
     }
 
     if (user.role === Role.PROJECT_MANAGER) {
@@ -166,7 +170,15 @@ export class ProjectService {
       completionPercentage: computeCompletionPercentage(tasks),
     }));
 
-    return { data, total, page: pagination.page, limit: pagination.limit };
+    return {
+      items: data,
+      meta: {
+        total,
+        page: pagination.page,
+        limit: pagination.limit,
+        totalPages: Math.ceil(total / pagination.limit),
+      },
+    };
   }
 
   async getProjectById(id: string, user: AuthContext) {
@@ -323,7 +335,7 @@ export class ProjectService {
       });
 
       return deleted;
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   async archiveProject(id: string, user: AuthContext, ipAddress?: string) {

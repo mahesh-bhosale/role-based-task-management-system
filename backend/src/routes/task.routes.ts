@@ -63,4 +63,11 @@ router.patch(
   taskController.assign.bind(taskController)
 );
 
+router.delete(
+  '/:id/assign',
+  authorize(Role.ADMIN, Role.PROJECT_MANAGER),
+  validate(taskIdParamSchema, 'params'),
+  taskController.unassign.bind(taskController)
+);
+
 export default router;

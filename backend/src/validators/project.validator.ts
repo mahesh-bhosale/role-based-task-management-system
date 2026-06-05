@@ -36,6 +36,7 @@ export const listProjectsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().optional(),
   status: z.nativeEnum(ProjectStatus).optional(),
   managerId: z.string().uuid().optional(),
+  managerName: z.string().optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
   search: z.string().optional(),

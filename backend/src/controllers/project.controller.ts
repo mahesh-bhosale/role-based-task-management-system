@@ -14,6 +14,7 @@ export class ProjectController {
         {
           status: req.query.status as ProjectStatus | undefined,
           managerId: req.query.managerId as string | undefined,
+          managerName: req.query.managerName as string | undefined,
           startDate: req.query.startDate ? new Date(String(req.query.startDate)) : undefined,
           endDate: req.query.endDate ? new Date(String(req.query.endDate)) : undefined,
           search: req.query.search as string | undefined,

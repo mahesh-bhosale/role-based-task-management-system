@@ -335,7 +335,13 @@ async function employeeDashboard(userId: string) {
     tasksByStatus,
     dueSoonTasks,
     recentlyCompletedTasks,
-    recentWorkLogs,
+    recentWorklogs: recentWorkLogs.map((wl) => ({
+      id: wl.id,
+      taskName: wl.task?.name ?? 'Unknown Task',
+      hoursWorked: wl.hoursWorked,
+      description: wl.description,
+      createdAt: wl.createdAt,
+    })),
     totalHoursThisWeek: weekHoursAgg._sum.hoursWorked ?? 0,
   };
 }

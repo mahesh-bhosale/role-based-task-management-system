@@ -13,17 +13,18 @@ import {
 
 const router = Router();
 
-router.use(authenticate, authorize(Role.ADMIN));
+router.use(authenticate);
 
 // GET /api/users — list all users with optional role filter
-router.get('/', validate(listUsersQuerySchema, 'query'), userController.list.bind(userController));
+router.get('/', validate(listUsersQuerySchema, 'query'), authorize(Role.ADMIN, Role.PROJECT_MANAGER), userController.list.bind(userController));
 
 // POST /api/users — create user
-router.post('/', validate(createUserSchema), userController.create.bind(userController));
+router.post('/', authorize(Role.ADMIN), validate(createUserSchema), userController.create.bind(userController));
 
 // GET /api/users/:id — user detail with assigned tasks and recent logs
 router.get(
   '/:id',
+  authorize(Role.ADMIN, Role.PROJECT_MANAGER),
   validate(userIdParamSchema, 'params'),
   userController.getById.bind(userController)
 );
@@ -31,6 +32,7 @@ router.get(
 // PUT /api/users/:id — update name, email, role, isActive
 router.put(
   '/:id',
+  authorize(Role.ADMIN),
   validate(userIdParamSchema, 'params'),
   validate(updateUserSchema),
   userController.update.bind(userController)
@@ -39,6 +41,7 @@ router.put(
 // PATCH /api/users/:id — partial update (same handler)
 router.patch(
   '/:id',
+  authorize(Role.ADMIN),
   validate(userIdParamSchema, 'params'),
   validate(updateUserSchema),
   userController.update.bind(userController)
@@ -47,6 +50,7 @@ router.patch(
 // DELETE /api/users/:id — deactivate (soft delete)
 router.delete(
   '/:id',
+  authorize(Role.ADMIN),
   validate(userIdParamSchema, 'params'),
   userController.deactivate.bind(userController)
 );

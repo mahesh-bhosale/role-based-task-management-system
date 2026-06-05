@@ -11,6 +11,7 @@ export class UserController {
     try {
       const pagination = getPagination(req.query as Record<string, unknown>);
       const role = req.query.role as Role | undefined;
+      console.log('GET /users query:', req.query, 'parsed role:', role);
       const result = await userService.list(pagination, { role });
       return success(res, result);
     } catch (err) {

@@ -28,12 +28,12 @@ export const tasksApi = {
   },
 
   assignTask: async (id: string, userId: string) => {
-    const { data } = await api.post<ApiResponse<null>>(`/tasks/${id}/assignments`, { userId });
+    const { data } = await api.patch<ApiResponse<null>>(`/tasks/${id}/assign`, { userId });
     return data.data;
   },
 
   unassignTask: async (id: string, userId: string) => {
-    const { data } = await api.delete<ApiResponse<null>>(`/tasks/${id}/assignments/${userId}`);
+    const { data } = await api.delete<ApiResponse<null>>(`/tasks/${id}/assign`);
     return data.data;
   },
 };

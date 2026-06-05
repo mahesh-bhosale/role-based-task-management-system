@@ -66,3 +66,37 @@ export const useDeleteTask = () => {
     }
   });
 };
+
+export const useAssignTask = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ id, userId }: { id: string; userId: string }) => tasksApi.assignTask(id, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', variables.id] });
+      toast({ title: 'User assigned to task successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to assign user to task', description: error.message, variant: 'destructive' });
+    }
+  });
+};
+
+export const useUnassignTask = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ id, userId }: { id: string; userId: string }) => tasksApi.unassignTask(id, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', variables.id] });
+      toast({ title: 'User removed from task successfully' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to remove user from task', description: error.message, variant: 'destructive' });
+    }
+  });
+};

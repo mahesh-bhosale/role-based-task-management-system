@@ -1,6 +1,6 @@
 import { Prisma, Role, TaskPriority, TaskStatus } from '@prisma/client';
 import { prisma } from '../config/database';
-import { AppError, PaginatedListResult } from '../types/shared';
+import { AppError, PaginatedResult } from '../types/shared';
 import { PaginationParams } from '../utils/pagination';
 import { notificationService } from './notification.service';
 
@@ -15,6 +15,7 @@ export interface TaskFilters {
   status?: TaskStatus;
   priority?: TaskPriority;
   assignedUserId?: string;
+  assigneeName?: string;
   projectId?: string;
   deadlineBefore?: Date;
   deadlineAfter?: Date;
@@ -157,6 +158,9 @@ export class TaskService {
         ],
       });
     }
+    if (filters.assigneeName) {
+      andFilters.push({ assignments: { some: { user: { name: { contains: filters.assigneeName } } } } });
+    }
 
     if (user.role === Role.EMPLOYEE) {
       andFilters.push({ assignments: { some: { userId: user.id } } });
@@ -171,7 +175,7 @@ export class TaskService {
     filters: TaskFilters,
     pagination: PaginationParams,
     user: AuthContext
-  ): Promise<PaginatedListResult<unknown>> {
+  ): Promise<PaginatedResult<unknown>> {
     const where = this.buildWhereClause(filters, user);
 
     const [data, total] = await Promise.all([
@@ -191,7 +195,15 @@ export class TaskService {
       prisma.task.count({ where }),
     ]);
 
-    return { data, total, page: pagination.page, limit: pagination.limit };
+    return {
+      items: data,
+      meta: {
+        total,
+        page: pagination.page,
+        limit: pagination.limit,
+        totalPages: Math.ceil(total / pagination.limit),
+      },
+    };
   }
 
   async getTaskById(id: string, user: AuthContext) {
@@ -292,7 +304,7 @@ export class TaskService {
           },
         },
       });
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   async updateTask(id: string, dto: UpdateTaskDto, user: AuthContext, ipAddress?: string) {
@@ -348,7 +360,7 @@ export class TaskService {
       }
 
       return updated;
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   async deleteTask(id: string, user: AuthContext, ipAddress?: string) {
@@ -384,7 +396,7 @@ export class TaskService {
       });
 
       return deleted;
-    });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   async assignTask(id: string, userId: string, user: AuthContext, ipAddress?: string) {
@@ -456,7 +468,60 @@ export class TaskService {
       });
 
       return updated;
+    }, { maxWait: 5000, timeout: 20000 });
+  }
+
+  async unassignTask(id: string, user: AuthContext, ipAddress?: string) {
+    if (user.role === Role.EMPLOYEE) {
+      throw new AppError(403, 'Employees cannot unassign tasks');
+    }
+
+    const task = await prisma.task.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        assignments: {
+          include: { user: { select: { id: true, name: true, email: true } } },
+        },
+      },
     });
+
+    if (!task) throw new AppError(404, 'Task not found');
+    await this.assertTaskManagementAccess(task, user);
+
+    const previousAssignments = task.assignments.map((a) => ({
+      userId: a.userId,
+      userName: a.user.name,
+    }));
+
+    if (previousAssignments.length === 0) return task;
+
+    return prisma.$transaction(async (tx) => {
+      await tx.taskAssignment.deleteMany({
+        where: { taskId: id },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'ASSIGN',
+          entity: 'TASK',
+          entityId: id,
+          previousValue: toJsonValue({ assignments: previousAssignments }),
+          newValue: toJsonValue({ status: 'unassigned' }),
+          ipAddress: ipAddress ?? null,
+        },
+      });
+
+      return tx.task.findUnique({
+        where: { id },
+        include: {
+          project: { select: { id: true, name: true } },
+          assignments: {
+            include: { user: { select: { id: true, name: true, email: true } } },
+          },
+        },
+      });
+    }, { maxWait: 5000, timeout: 20000 });
   }
 
   async getTaskHistory(id: string, user: AuthContext) {

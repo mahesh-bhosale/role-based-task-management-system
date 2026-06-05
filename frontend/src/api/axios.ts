@@ -22,6 +22,13 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+
+  if (config.params) {
+    config.params = Object.fromEntries(
+      Object.entries(config.params).filter(([_, v]) => v !== '' && v !== null && v !== undefined)
+    );
+  }
+
   return config;
 });
 
@@ -43,8 +50,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Skip refresh for the auth endpoints themselves
-    if (originalRequest.url?.includes('/auth/')) {
+    // Skip refresh for login and refresh endpoints themselves
+    if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
       return Promise.reject(error);
     }
 

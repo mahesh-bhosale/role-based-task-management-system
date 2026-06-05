@@ -18,7 +18,7 @@ interface EmployeeDashboardProps {
       id: string;
       name: string;
       priority: string;
-      deadline: string;
+      deadline: string | Date | null;
       projectName: string;
     }>;
     recentlyCompletedTasks: Array<any>;
@@ -61,7 +61,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) =>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 mt-2">
-              {data.dueSoonTasks.map((t) => (
+              {(data.dueSoonTasks ?? []).map((t) => (
                 <div key={t.id} className="flex flex-col gap-2 p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                   <div className="flex justify-between items-start">
                     <p className="font-semibold text-white">{t.name}</p>
@@ -69,11 +69,11 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) =>
                   </div>
                   <div className="flex justify-between text-xs text-slate-400">
                     <span>{t.projectName}</span>
-                    <Countdown deadline={t.deadline} />
+                    {t.deadline && <Countdown deadline={String(t.deadline)} />}
                   </div>
                 </div>
               ))}
-              {data.dueSoonTasks.length === 0 && (
+              {(data.dueSoonTasks ?? []).length === 0 && (
                 <p className="text-sm text-slate-500 text-center py-6">No tasks due soon. Great job!</p>
               )}
             </div>
@@ -115,7 +115,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) =>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {data.recentWorklogs.map((log) => (
+              {(data.recentWorklogs ?? []).map((log) => (
                 <div key={log.id} className="p-4 rounded-lg bg-slate-800/30 border border-slate-800 relative group">
                   <div className="flex justify-between items-start mb-2">
                     <p className="font-semibold text-slate-200 text-sm truncate pr-2">{log.taskName}</p>
@@ -130,7 +130,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ data }) =>
                   </div>
                 </div>
               ))}
-              {data.recentWorklogs.length === 0 && (
+              {(data.recentWorklogs ?? []).length === 0 && (
                 <div className="col-span-full text-center py-6 text-slate-500">You haven't logged any work recently.</div>
               )}
             </div>

@@ -155,12 +155,12 @@ export const ProjectFormPage: React.FC = () => {
                   name="managerId"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingUsers}>
+                    <Select onValueChange={(val) => field.onChange(val === 'unassigned' ? undefined : val)} value={field.value || 'unassigned'} disabled={isLoadingUsers}>
                       <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                         <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a manager"} />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-700">
-                        <SelectItem value="" className="text-slate-400">Unassigned</SelectItem>
+                        <SelectItem value="unassigned" className="text-slate-400">Unassigned</SelectItem>
                         {usersData?.items.map((user: any) => (
                           <SelectItem key={user.id} value={user.id} className="text-slate-200 focus:bg-slate-800 focus:text-white">
                             {user.name}

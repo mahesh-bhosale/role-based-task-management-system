@@ -22,7 +22,8 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 
 export const ProjectsPage: React.FC = () => {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useProjects({ page, limit: 10 });
+  const [filters, setFilters] = useState({ status: '', managerName: '', search: '' });
+  const { data, isLoading } = useProjects({ page, limit: 10, ...filters });
   const deleteProject = useDeleteProject();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -111,16 +112,32 @@ export const ProjectsPage: React.FC = () => {
         ) : null}
       />
 
-      {/* Filter Bar Placeholder */}
       <div className="flex gap-4 mb-6 p-4 bg-slate-900 border border-slate-700 rounded-xl">
         <div className="text-sm text-slate-400">Filters:</div>
-        <select className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2">
+        <select 
+          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2"
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+        >
           <option value="">All Statuses</option>
           {Object.entries(PROJECT_STATUS_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <input type="text" placeholder="Manager Name" className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1" />
+        <input 
+          type="text" 
+          placeholder="Manager Name" 
+          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1" 
+          value={filters.managerName}
+          onChange={(e) => setFilters({ ...filters, managerName: e.target.value })}
+        />
+        <input 
+          type="text" 
+          placeholder="Search by Project Name" 
+          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1" 
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        />
       </div>
 
       {data?.items.length === 0 && !isLoading ? (

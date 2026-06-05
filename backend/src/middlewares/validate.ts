@@ -8,12 +8,25 @@ export function validate(schema: ZodSchema, part: RequestPart = 'body') {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       const parsed = schema.parse(req[part]);
-      req[part] = parsed;
+      Object.defineProperty(req, part, {
+        value: parsed,
+        writable: true,
+        enumerable: true,
+        configurable: true
+      });
       next();
     } catch (err) {
       if (err instanceof ZodError) {
+        console.error(`[Validate Error on ${req.method} ${req.originalUrl}]:`, {
+          body: req[part],
+          fieldErrors: err.flatten().fieldErrors,
+          formErrors: err.flatten().formErrors
+        });
         next(
-          new AppError(400, 'Validation failed', err.flatten().fieldErrors as Record<string, string[]>)
+          new AppError(400, 'Validation failed', {
+            ...err.flatten().fieldErrors,
+            _form: err.flatten().formErrors
+          })
         );
         return;
       }

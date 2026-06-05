@@ -7,7 +7,7 @@ export const createTaskSchema = z.object({
   projectId: z.string().uuid(),
   priority: z.nativeEnum(TaskPriority),
   deadline: z.coerce.date().optional(),
-  estimatedHours: z.number().positive().optional(),
+  estimatedHours: z.number().min(0).optional(),
   assignedToUserId: z.string().uuid().optional(),
 });
 
@@ -18,7 +18,7 @@ export const updateTaskSchema = z
     priority: z.nativeEnum(TaskPriority).optional(),
     status: z.nativeEnum(TaskStatus).optional(),
     deadline: z.coerce.date().optional().nullable(),
-    estimatedHours: z.number().positive().optional().nullable(),
+    estimatedHours: z.number().min(0).optional().nullable(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided',
@@ -35,11 +35,12 @@ export const assignTaskSchema = z.object({
 export const listTasksQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().optional(),
-  status: z.nativeEnum(TaskStatus).optional(),
-  priority: z.nativeEnum(TaskPriority).optional(),
+  status: z.preprocess((val) => val === '' ? undefined : val, z.nativeEnum(TaskStatus).optional()),
+  priority: z.preprocess((val) => val === '' ? undefined : val, z.nativeEnum(TaskPriority).optional()),
   assignedUserId: z.string().uuid().optional(),
   projectId: z.string().uuid().optional(),
   deadlineBefore: z.coerce.date().optional(),
   deadlineAfter: z.coerce.date().optional(),
   search: z.string().optional(),
+  assigneeName: z.string().optional(),
 });

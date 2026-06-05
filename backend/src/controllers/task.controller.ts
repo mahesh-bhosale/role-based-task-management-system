@@ -22,6 +22,7 @@ export class TaskController {
             ? new Date(String(req.query.deadlineAfter))
             : undefined,
           search: req.query.search as string | undefined,
+          assigneeName: req.query.assigneeName as string | undefined,
         },
         pagination,
         { id: req.user!.id, role: req.user!.role }
@@ -112,6 +113,19 @@ export class TaskController {
         req.ip
       );
       return success(res, task, 'Task assigned');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async unassign(req: Request, res: Response, next: NextFunction) {
+    try {
+      const task = await taskService.unassignTask(
+        asString(req.params.id),
+        { id: req.user!.id, role: req.user!.role },
+        req.ip
+      );
+      return success(res, task, 'Task unassigned');
     } catch (err) {
       next(err);
     }

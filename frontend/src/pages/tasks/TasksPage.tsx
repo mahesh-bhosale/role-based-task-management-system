@@ -23,7 +23,7 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 
 export const TasksPage: React.FC = () => {
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({ status: '', priority: '', assigneeName: '' });
+  const [filters, setFilters] = useState({ status: '', priority: '', assigneeName: '', search: '', deadlineBefore: '' });
   
   const { data, isLoading } = useTasks({ page, limit: 10, ...filters });
   const deleteTask = useDeleteTask();
@@ -56,7 +56,7 @@ export const TasksPage: React.FC = () => {
     },
     { 
       header: 'Assignee', 
-      cell: (t: Task) => <span className="text-slate-300">{t.assignee?.name || 'Unassigned'}</span> 
+      cell: (t: Task) => <span className="text-slate-300">{t.assignments?.[0]?.user?.name || t.assignee?.name || 'Unassigned'}</span> 
     },
     { 
       header: 'Deadline', 
@@ -135,6 +135,22 @@ export const TasksPage: React.FC = () => {
             onChange={(e) => setFilters({ ...filters, assigneeName: e.target.value })}
           />
         )}
+        <input 
+          type="text" 
+          placeholder="Search task name..." 
+          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-1.5 focus:ring-1 focus:ring-primary outline-none w-[180px]" 
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-slate-500 text-xs">Deadline Before:</span>
+          <input 
+            type="date" 
+            className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1.5 focus:ring-1 focus:ring-primary outline-none" 
+            value={filters.deadlineBefore}
+            onChange={(e) => setFilters({ ...filters, deadlineBefore: e.target.value })}
+          />
+        </div>
       </div>
 
       {data?.items.length === 0 && !isLoading ? (

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Notification } from '../types/api.types';
 import { notificationsApi } from '../api/notifications.api';
 import { useAuth } from './AuthContext';
@@ -7,61 +8,53 @@ import { useToast } from '../hooks/use-toast';
 interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (id: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchNotifications = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const data = await notificationsApi.getNotifications({ limit: 20 });
-      setNotifications(data.items);
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error);
-    }
-  };
+  const { data: notificationsData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsApi.getNotifications({ limit: 10 }),
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
 
-  const markAsRead = async (id: string) => {
-    try {
-      await notificationsApi.markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-      );
-    } catch (error) {
-      console.error('Failed to mark as read:', error);
-    }
-  };
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => notificationsApi.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
 
-  const markAllAsRead = async () => {
-    try {
-      await notificationsApi.markAllAsRead();
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationsApi.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast({ title: 'All notifications marked as read' });
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-    }
+    },
+  });
+
+  const notifications = notificationsData?.items || [];
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const markAsRead = (id: string) => {
+    markAsReadMutation.mutate(id);
   };
 
-  useEffect(() => {
-    fetchNotifications();
-    // Simple polling every 2 minutes
-    const interval = setInterval(fetchNotifications, 120000);
-    return () => clearInterval(interval);
-  }, [isAuthenticated]);
-
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const markAllAsRead = () => {
+    markAllAsReadMutation.mutate();
+  };
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead }}
+      value={{ notifications, unreadCount, markAsRead, markAllAsRead }}
     >
       {children}
     </NotificationContext.Provider>
