@@ -69,6 +69,9 @@ This project is a Role-Based Project & Task Management System built to demonstra
 | **Background Jobs**| node-cron | Handles scheduled deadline and overdue alert emails. |
 | **Tooling** | Docker, GitHub Actions, Jest | Ensuring code quality, containerization, and continuous integration. |
 
+<p align="center">
+  <img src="./taskflow_architecture_diagram.svg" alt="System Architecture" width="1000"/>
+</p>
 
 ### Key Design Decisions
 1. **Prisma ORM for Type Safety:** Ensures end-to-end type safety from the database schema directly to the frontend API types.
