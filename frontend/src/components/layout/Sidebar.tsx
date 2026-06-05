@@ -12,7 +12,12 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { ROLES } from '../../lib/constants';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   
   if (!user) return null;
@@ -34,7 +39,14 @@ export const Sidebar: React.FC = () => {
   const visibleItems = menuItems.filter(item => item.roles.includes(role as any));
 
   return (
-    <aside className="w-64 fixed inset-y-0 left-0 bg-slate-950 border-r border-slate-800 z-30 hidden md:flex flex-col">
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 md:hidden" 
+          onClick={onClose} 
+        />
+      )}
+      <aside className={`fixed inset-y-0 left-0 bg-slate-950 border-r border-slate-800 z-40 w-64 flex flex-col transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="h-16 flex items-center px-6 border-b border-slate-800">
         <div className="flex items-center gap-2 text-vividYellow">
           <CheckSquare className="h-6 w-6" />
@@ -49,6 +61,11 @@ export const Sidebar: React.FC = () => {
             <NavLink
               key={item.name}
               to={item.path}
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  onClose();
+                }
+              }}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   isActive
@@ -68,5 +85,6 @@ export const Sidebar: React.FC = () => {
         TaskFlow v1.0
       </div>
     </aside>
+    </>
   );
 };

@@ -16,7 +16,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { getInitials, roleBadgeColor, roleLabel, timeAgo } from '../../lib/utils';
 import { Badge } from '../ui/badge';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onMenuToggle: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
   const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
 
@@ -25,7 +29,7 @@ export const Header: React.FC = () => {
   return (
     <header className="h-16 fixed top-0 right-0 left-0 md:left-64 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 z-20 flex items-center justify-between px-4 sm:px-6">
       <div className="flex items-center">
-        <Button variant="ghost" size="icon" className="md:hidden mr-2 text-slate-400">
+        <Button variant="ghost" size="icon" className="md:hidden mr-2 text-slate-400" onClick={onMenuToggle}>
           <Menu className="h-6 w-6" />
         </Button>
       </div>
