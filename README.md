@@ -69,6 +69,7 @@ This project is a Role-Based Project & Task Management System built to demonstra
 | **Background Jobs**| node-cron | Handles scheduled deadline and overdue alert emails. |
 | **Tooling** | Docker, GitHub Actions, Jest | Ensuring code quality, containerization, and continuous integration. |
 
+
 ### Key Design Decisions
 1. **Prisma ORM for Type Safety:** Ensures end-to-end type safety from the database schema directly to the frontend API types.
 2. **Soft Deletes:** Deletions apply a `deletedAt` timestamp to preserve referential integrity for historical Audit Logs.
@@ -76,14 +77,24 @@ This project is a Role-Based Project & Task Management System built to demonstra
 4. **JWT Rotation & Security:** Access tokens are short-lived, with refresh tokens securely stored to allow remote session revocation.
 
 ---
+## 🎥 Project Walkthrough
 
+[Watch Demo Video](https://drive.google.com/file/d/1zfUMGTDrNswyHpaHtuOinR_shEJ9u74Z/view?usp=sharing)
+---
 ## 📸 Screenshots
-*(Adding screenshots later prior to final submission)*
 
-- **Admin Dashboard:** `[Placeholder for Admin Dashboard Screenshot]`
-- **Kanban Board:** `[Placeholder for Kanban Board Screenshot]`
-- **Work Logs & Replies:** `[Placeholder for Work Logs Screenshot]`
-- **Audit Logging:** `[Placeholder for Audit Log Screenshot]`
+
+- **Admin Dashboard:** 
+<img width="1920" height="1080" alt="Screenshot (13)" src="https://github.com/user-attachments/assets/ac7ddc7e-508b-4455-bd4c-0fccc64e50df" />
+
+- **Kanban Board:** 
+<img width="1920" height="1080" alt="Screenshot (14)" src="https://github.com/user-attachments/assets/03d97e01-4803-434b-a503-04a343c6490e" />
+
+- **Work Logs & Replies:** 
+<img width="1920" height="1080" alt="Screenshot (15)" src="https://github.com/user-attachments/assets/15579aa4-a74e-4927-80e1-e76cabf0664d" />
+
+- **Audit Logging:**
+<img width="1920" height="1080" alt="Screenshot (16)" src="https://github.com/user-attachments/assets/a6e53a0d-b00c-4144-8e11-4d5d8cf201c3" />
 
 ---
 
@@ -146,3 +157,36 @@ You can explore the API using two methods:
   - **Password Hashing**: Bcrypt with appropriate salt rounds.
   - **Payload Size Limits**: Request body limits enforced (`10mb`) to prevent memory exhaustion/DoS attacks.
 - **Testing Coverage:** Included Jest Integration test suites covering core API flows.
+
+
+## 🗄️ Database Design
+
+Core Tables:
+
+- Users
+- Projects
+- Tasks
+- TaskAssignments
+- WorkLogs
+- LogReplies
+- Notifications
+- AuditLogs
+- RefreshTokens
+
+Relationships:
+- User → Projects (Manager)
+- Project → Tasks
+- Task → Assignments
+- Task → WorkLogs
+- WorkLog → Replies
+
+## 🌐 Deployment
+
+Frontend: Vercel
+Backend: Render
+Database: Railway MySQL
+Email Service: Mailtrap SMTP
+
+## Mailtrap SS
+<img width="1003" height="889" alt="image" src="https://github.com/user-attachments/assets/17b0502c-9c4e-4d8b-99a0-e8c3f1eaaf37" />
+<img width="855" height="818" alt="image" src="https://github.com/user-attachments/assets/81534314-c0d8-4439-9396-954bdc2e4b87" />
