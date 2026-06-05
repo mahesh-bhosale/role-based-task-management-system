@@ -2,6 +2,7 @@ import app from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { startDeadlineChecker } from './jobs/deadlineChecker';
+import { initSocket } from './socket';
 
 async function bootstrap(): Promise<void> {
   await connectDatabase();
@@ -16,6 +17,9 @@ async function bootstrap(): Promise<void> {
   const server = app.listen(env.PORT, () => {
     console.log(`Server running on port ${env.PORT} [${env.NODE_ENV}]`);
   });
+
+  // Initialize WebSockets
+  initSocket(server);
 
   const shutdown = async (signal: string) => {
     console.log(`\n${signal} received. Shutting down gracefully...`);

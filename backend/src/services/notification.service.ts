@@ -2,6 +2,7 @@ import { Prisma, Role } from '@prisma/client';
 import { prisma } from '../config/database';
 import { AppError, PaginatedResult } from '../types/shared';
 import { PaginationParams } from '../utils/pagination';
+import { emitToUser } from '../socket';
 
 export class NotificationService {
   /** GET /api/notifications — always returns the current user's own notifications,
@@ -58,7 +59,12 @@ export class NotificationService {
     message: string;
     entityId?: string | null;
   }) {
-    return prisma.notification.create({ data });
+    const notification = await prisma.notification.create({ data });
+    
+    // Emit real-time event to the user
+    emitToUser(data.userId, 'new_notification', notification);
+    
+    return notification;
   }
 
   /** PATCH /api/notifications/:id/read — marks isRead=true and status='read' */

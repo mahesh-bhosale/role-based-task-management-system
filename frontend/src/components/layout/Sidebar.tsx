@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           onClick={onClose} 
         />
       )}
-      <aside className={`fixed inset-y-0 left-0 bg-slate-950 border-r border-slate-800 z-40 w-64 flex flex-col transform transition-transform duration-200 ease-in-out md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 bg-slate-950 border-r border-slate-800 z-40 w-64 flex flex-col transform transition-transform duration-200 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
       <div className="h-16 flex items-center px-6 border-b border-slate-800">
         <div className="flex items-center gap-2 text-vividYellow">
           <CheckSquare className="h-6 w-6" />

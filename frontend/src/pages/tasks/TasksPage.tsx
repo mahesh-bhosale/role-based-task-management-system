@@ -8,7 +8,7 @@ import { DataTable } from '../../components/shared/DataTable';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { PriorityBadge } from '../../components/shared/PriorityBadge';
 import { Button } from '../../components/ui/button';
-import { Plus, CheckSquare, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Plus, CheckSquare, MoreHorizontal, Pencil, Trash2, LayoutList, KanbanSquare } from 'lucide-react';
 import { ROLES, TASK_STATUS_LABELS, TASK_PRIORITY_LABELS } from '../../lib/constants';
 import { Task } from '../../types/api.types';
 import { formatDateTime } from '../../lib/utils';
@@ -20,12 +20,18 @@ import {
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
+import { KanbanBoard } from './KanbanBoard';
 
 export const TasksPage: React.FC = () => {
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({ status: '', priority: '', assigneeName: '', search: '', deadlineBefore: '' });
   
-  const { data, isLoading } = useTasks({ page, limit: 10, ...filters });
+  const { data, isLoading } = useTasks({ 
+    page, 
+    limit: viewMode === 'board' ? 100 : 10, 
+    ...filters 
+  });
   const deleteTask = useDeleteTask();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -97,59 +103,87 @@ export const TasksPage: React.FC = () => {
       <PageHeader 
         title="Tasks" 
         description="View and manage tasks across projects."
-        action={canCreate ? (
-          <Button onClick={() => navigate('/tasks/new')} className="bg-primary text-primary-foreground font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all">
-            <Plus className="mr-2 h-4 w-4" /> Create Task
-          </Button>
-        ) : null}
+        action={
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-4 sm:mt-0">
+            <div className="flex bg-slate-900 border border-slate-700 rounded-lg p-1">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 h-8 ${viewMode === 'list' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                <LayoutList className="h-4 w-4 mr-2" /> List
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setViewMode('board')}
+                className={`px-3 py-1 h-8 ${viewMode === 'board' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                <KanbanSquare className="h-4 w-4 mr-2" /> Board
+              </Button>
+            </div>
+            {canCreate && (
+              <Button onClick={() => navigate('/tasks/new')} className="bg-primary text-primary-foreground font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all">
+                <Plus className="mr-2 h-4 w-4" /> Create Task
+              </Button>
+            )}
+          </div>
+        }
       />
 
-      <div className="flex flex-wrap gap-4 mb-6 p-4 bg-slate-900 border border-slate-700 rounded-xl">
-        <div className="text-sm text-slate-400 flex items-center">Filters:</div>
-        <select 
-          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1.5 focus:ring-1 focus:ring-primary outline-none"
-          value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-        >
-          <option value="">All Statuses</option>
-          {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-        <select 
-          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1.5 focus:ring-1 focus:ring-primary outline-none"
-          value={filters.priority}
-          onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-        >
-          <option value="">All Priorities</option>
-          {Object.entries(TASK_PRIORITY_LABELS).map(([k, v]) => (
-            <option key={k} value={k}>{v}</option>
-          ))}
-        </select>
-        {canCreate && (
+      <div className="mb-6 p-4 bg-slate-900 border border-slate-700 rounded-xl">
+        <div className="text-sm text-slate-400 mb-3 font-medium">Filters:</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <select 
+            className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none"
+            value={filters.status}
+            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          >
+            <option value="">All Statuses</option>
+            {Object.entries(TASK_STATUS_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+          
+          <select 
+            className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none"
+            value={filters.priority}
+            onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+          >
+            <option value="">All Priorities</option>
+            {Object.entries(TASK_PRIORITY_LABELS).map(([k, v]) => (
+              <option key={k} value={k}>{v}</option>
+            ))}
+          </select>
+          
+          {canCreate && (
+            <input 
+              type="text" 
+              placeholder="Assignee Name" 
+              className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none" 
+              value={filters.assigneeName}
+              onChange={(e) => setFilters({ ...filters, assigneeName: e.target.value })}
+            />
+          )}
+          
           <input 
             type="text" 
-            placeholder="Assignee Name" 
-            className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-1.5 focus:ring-1 focus:ring-primary outline-none w-[180px]" 
-            value={filters.assigneeName}
-            onChange={(e) => setFilters({ ...filters, assigneeName: e.target.value })}
+            placeholder="Search task name..." 
+            className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none" 
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
           />
-        )}
-        <input 
-          type="text" 
-          placeholder="Search task name..." 
-          className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-1.5 focus:ring-1 focus:ring-primary outline-none w-[180px]" 
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-        />
-        <div className="flex items-center gap-2">
-          <span className="text-slate-500 text-xs">Deadline Before:</span>
-          <input 
-            type="date" 
-            className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-2 py-1.5 focus:ring-1 focus:ring-primary outline-none" 
-            value={filters.deadlineBefore}
-            onChange={(e) => setFilters({ ...filters, deadlineBefore: e.target.value })}
-          />
+          
+          <div className="flex items-center gap-2">
+            <span className="text-slate-500 text-xs hidden lg:inline whitespace-nowrap">Deadline Before:</span>
+            <input 
+              type="date" 
+              className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded px-3 py-2 focus:ring-1 focus:ring-primary outline-none" 
+              value={filters.deadlineBefore}
+              onChange={(e) => setFilters({ ...filters, deadlineBefore: e.target.value })}
+            />
+          </div>
         </div>
       </div>
 
@@ -161,6 +195,8 @@ export const TasksPage: React.FC = () => {
           actionLabel={canCreate ? "Create Task" : undefined}
           onAction={canCreate ? () => navigate('/tasks/new') : undefined}
         />
+      ) : viewMode === 'board' ? (
+        <KanbanBoard tasks={data?.items || []} />
       ) : (
         <DataTable 
           data={data?.items || []} 

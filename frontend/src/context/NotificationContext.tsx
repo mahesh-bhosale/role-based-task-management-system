@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { io, Socket } from 'socket.io-client';
 import { Notification } from '../types/api.types';
 import { notificationsApi } from '../api/notifications.api';
 import { useAuth } from './AuthContext';
@@ -23,8 +24,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     queryKey: ['notifications'],
     queryFn: () => notificationsApi.getNotifications({ limit: 10 }),
     enabled: isAuthenticated,
-    refetchInterval: 60000,
+    // Removed refetchInterval, relying on WebSockets now
   });
+
+  React.useEffect(() => {
+    let socket: Socket | null = null;
+    if (isAuthenticated) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
+          auth: { token },
+          transports: ['websocket'],
+        });
+
+        socket.on('new_notification', (newNotification: Notification) => {
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          toast({ 
+            title: 'New Notification', 
+            description: newNotification.message 
+          });
+        });
+      }
+    }
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [isAuthenticated, queryClient, toast]);
 
   const markAsReadMutation = useMutation({
     mutationFn: (id: string) => notificationsApi.markAsRead(id),

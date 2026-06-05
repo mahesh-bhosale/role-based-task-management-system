@@ -6,11 +6,12 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Skeleton } from '../../components/ui/skeleton';
 import { Avatar, AvatarFallback } from '../../components/ui/avatar';
-import { useUsers, useUpdateUser } from '../../hooks/useUsers';
+import { useUsers, useUpdateUser, useDeactivateUser } from '../../hooks/useUsers';
 import { UserFormDialog } from '../../components/users/UserFormDialog';
+import { ConfirmDialog } from '../../components/shared/ConfirmDialog';
 import { useToast } from '../../hooks/use-toast';
 import { User } from '../../types/api.types';
-import { UserPlus, Edit2, ShieldAlert, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { UserPlus, Edit2, ShieldAlert, CheckCircle2, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const UsersPage: React.FC = () => {
@@ -21,6 +22,8 @@ export const UsersPage: React.FC = () => {
   
   const { data: usersData, isLoading } = useUsers({ limit: 100 });
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
+  const { mutate: deleteUser, isPending: isDeleting } = useDeactivateUser();
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const { toast } = useToast();
 
   const handleEditClick = (user: User) => {
@@ -47,6 +50,21 @@ export const UsersPage: React.FC = () => {
         }
       }
     );
+  };
+
+  const handleDelete = () => {
+    if (userToDelete) {
+      deleteUser(userToDelete.id, {
+        onSuccess: () => {
+          toast({ title: 'User deleted successfully.' });
+          setUserToDelete(null);
+        },
+        onError: () => {
+          toast({ title: 'Failed to delete user.', variant: 'destructive' });
+          setUserToDelete(null);
+        }
+      });
+    }
   };
 
   const getRoleBadge = (role: string) => {
@@ -149,6 +167,16 @@ export const UsersPage: React.FC = () => {
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setUserToDelete(user)}
+                              disabled={isSelf}
+                              className="border-slate-700 bg-slate-800 text-red-400 hover:bg-slate-700 hover:text-red-300"
+                              title="Delete User"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -168,6 +196,16 @@ export const UsersPage: React.FC = () => {
         open={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
         userToEdit={userToEdit} 
+      />
+
+      <ConfirmDialog
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={handleDelete}
+        title="Delete User"
+        description={`Are you sure you want to delete ${userToDelete?.name}? This action cannot be undone.`}
+        variant="destructive"
+        isLoading={isDeleting}
       />
     </PageWrapper>
   );
